@@ -10,13 +10,13 @@
  * Version: %%GULP_INJECT_VERSION%%
  * GitHub: https://github.com/hustcc/canvas-nest.js
 **/
-var fx = document.documentElement.clientWidth;
-var fy = document.documentElement.clientHeight;
+var fx = window.innerWidth;
+var fy = window.innerHeight;
 var CanvasArray = new Array();
 CanvasArray[0] = document.createElement("canvas");
 CanvasArray[0].style = "position:absolute; top:0; left:0;";
-CanvasArray[0].width = document.documentElement.clientWidth;
-CanvasArray[0].height = document.documentElement.clientHeight;
+CanvasArray[0].width = window.innerWidth;
+CanvasArray[0].height = window.innerHeight;
 document.getElementsByTagName('body')[0].appendChild(CanvasArray[0]);
 ! function() {
   //封装方法，压缩之后减少文件大小
@@ -92,8 +92,8 @@ document.getElementsByTagName('body')[0].appendChild(CanvasArray[0]);
   the_canvas.id = canvas_id;
   the_canvas.style.cssText = "position:fixed;top:0;left:0;z-index:" + config.z + ";opacity:" + config.o;
   CanvasArray[1] = the_canvas;
-CanvasArray[1].width=document.documentElement.clientWidth;
-CanvasArray[1].height=document.documentElement.clientHeight;
+  CanvasArray[1].width=window.screen.width;
+  CanvasArray[1].height=window.screen.height;
   //当时鼠标位置存储，离开的时候，释放当前位置信息
   window.onmousemove = function(e) {
     e = e || window.event;
@@ -124,7 +124,7 @@ CanvasArray[1].height=document.documentElement.clientHeight;
     draw_canvas();
   }, 100);
 }();
-
+var Camera = new Array();
 function textToLine(wTextSet,wX,wY,ParticleNum,Closenness){
 	/*wTextSet=[{text:"COPLANMIC@BREAK", sphereRadius:140, sphereSpace:80, unitTime:100, time:1000},
 {text:"Show", sphereRadius:140, sphereSpace:80, unitTime:100, time:1000},
@@ -152,11 +152,15 @@ Closenness疏密0.5,1,2,4等
 		},
 		zoom : 1,
 		display : {
-			x : wX,
-			y : wY,
+			x : ((2*wX)+((wTextSet[0].text.length)*(wTextSet[0].sphereSpace)))/2,
+			y : wY + 0.5*wTextSet[0].sphereSpace,
 			z : 0
-		}
+		},
+		'wX' : ((2*wX)+((wTextSet[0].text.length)*(wTextSet[0].sphereSpace)))/2,
+		'wY' : wY + 0.5*wTextSet[0].sphereSpace
 	};
+	Camera.push(camera);
+	var cam = Camera.length-1;
 	var affine = {
 		world : {
 			size : function(p, size) {
@@ -200,30 +204,30 @@ Closenness疏密0.5,1,2,4等
 		view : {
 			point : function(p) {
 				return {
-					x : p.x - camera.self.x,
-					y : p.y - camera.self.y,
-					z : p.z - camera.self.z
+					x : p.x - Camera[cam].self.x,
+					y : p.y - Camera[cam].self.y,
+					z : p.z - Camera[cam].self.z
 				}
 			},
 			x : function(p) {
 				return {
 					x : p.x,
-					y : p.y*Math.cos(dtr(camera.rotate.x)) - p.z*Math.sin(dtr(camera.rotate.x)),
-					z : p.y*Math.sin(dtr(camera.rotate.x)) + p.z*Math.cos(dtr(camera.rotate.x))
+					y : p.y*Math.cos(dtr(Camera[cam].rotate.x)) - p.z*Math.sin(dtr(Camera[cam].rotate.x)),
+					z : p.y*Math.sin(dtr(Camera[cam].rotate.x)) + p.z*Math.cos(dtr(Camera[cam].rotate.x))
 				}
 			},
 			y : function(p) {
 				return {
-					x : p.x*Math.cos(dtr(camera.rotate.y)) + p.z*Math.sin(dtr(camera.rotate.y)),
+					x : p.x*Math.cos(dtr(Camera[cam].rotate.y)) + p.z*Math.sin(dtr(Camera[cam].rotate.y)),
 					y : p.y,
-					z : p.x*-Math.sin(dtr(camera.rotate.y)) + p.z*Math.cos(dtr(camera.rotate.y))
+					z : p.x*-Math.sin(dtr(Camera[cam].rotate.y)) + p.z*Math.cos(dtr(Camera[cam].rotate.y))
 				}
 			},
 			viewReset : function(p) {
 				return {
-					x : p.x - camera.self.x,
-					y : p.y - camera.self.y,
-					z : p.z - camera.self.z
+					x : p.x - Camera[cam].self.x,
+					y : p.y - Camera[cam].self.y,
+					z : p.z - Camera[cam].self.z
 				}
 			},
 			righthandedReversal : function(p) {
@@ -236,10 +240,10 @@ Closenness疏密0.5,1,2,4等
 		},
 		perspective : function(p) {
 			return {
-				x : p.x * ((camera.focus-camera.self.z) / ((camera.focus-camera.self.z) - p.z)) * camera.zoom,
-				y : p.y * ((camera.focus-camera.self.z) / ((camera.focus-camera.self.z) - p.z)) * camera.zoom,
-				z : p.z * ((camera.focus-camera.self.z) / ((camera.focus-camera.self.z) - p.z)) * camera.zoom,
-				p : ((camera.focus-camera.self.z) / ((camera.focus-camera.self.z) - p.z)) * camera.zoom,
+				x : p.x * ((Camera[cam].focus-Camera[cam].self.z) / ((Camera[cam].focus-Camera[cam].self.z) - p.z)) * Camera[cam].zoom,
+				y : p.y * ((Camera[cam].focus-Camera[cam].self.z) / ((Camera[cam].focus-Camera[cam].self.z) - p.z)) * Camera[cam].zoom,
+				z : p.z * ((Camera[cam].focus-Camera[cam].self.z) / ((Camera[cam].focus-Camera[cam].self.z) - p.z)) * Camera[cam].zoom,
+				p : ((Camera[cam].focus-Camera[cam].self.z) / ((Camera[cam].focus-Camera[cam].self.z) - p.z)) * camera.zoom,
 			}
 		},
 		display : function(p, display) {
@@ -300,7 +304,7 @@ Closenness疏密0.5,1,2,4等
 				this.affineIn.size,
 				this.affineIn.rotate,
 				this.affineIn.position,
-				camera.display
+				Camera[cam].display
 			);
 		}
 	};
@@ -365,16 +369,13 @@ Closenness疏密0.5,1,2,4等
 		var vibrateFlag = false;
 		var canvas = document.createElement("canvas");
 		CanvasArray.push(canvas);
-		CanvasArray[CanvasArray.length-1].width=document.documentElement.clientWidth;
-		CanvasArray[CanvasArray.length-1].height=document.documentElement.clientHeight;
+		CanvasArray[CanvasArray.length-1].width=window.innerWidth;
+		CanvasArray[CanvasArray.length-1].height=window.innerHeight;
 		canvas.style = "position:absolute; top:0; left:0;";
 		var ctx	= canvas.getContext("2d");
 		ctx.strokeStyle = strokeColor;
 			
-		window.onresize = function() {
-			camera.display.x = wX*document.documentElement.clientWidth/fx;
-			camera.display.y = wY*document.documentElement.clientHeight/fy;
-		};
+		
 		CanvasArray.push(canvas);
 		
 		/* class */
@@ -667,9 +668,9 @@ Closenness疏密0.5,1,2,4等
 					strokeColor = "rgba(255,255,255,0.1)";
 					backgroundColor = "rgba(0,0,0,1)";
 				};*/
-				ctx.clearRect(0, 0, document.documentElement.clientWidth, document.documentElement.clientHeight);
+				ctx.clearRect(0, 0, window.innerWidth, window.innerHeight);
 				ctx.fillStyle = backgroundColor;
-				ctx.fillRect(0, 0, document.documentElement.clientWidth, document.documentElement.clientHeight);
+				ctx.fillRect(0, 0, window.innerWidth, window.innerHeight);
 				ctx.strokeStyle = strokeColor;
 				update();
 				draw();
@@ -677,20 +678,25 @@ Closenness疏密0.5,1,2,4等
 			textSetChanger();
 		};
 		/*document.body.onmousemove = function(e) {
-		camera.rotate.x = e.pageY/window.innerHeight * 180 - 90;
-		camera.rotate.y = e.pageX/window.innerWidth * 180 - 90;
-		document.onmousedown = function() {camera.zoom = Math.random()*1+1};
-		document.onmouseup = function() {camera.zoom = 1};
+		Camera[cam].rotate.x = e.pageY/window.innerHeight * 180 - 90;
+		Camera[cam].rotate.y = e.pageX/window.innerWidth * 180 - 90;
+		document.onmousedown = function() {Camera[cam].zoom = Math.random()*1+1};
+		document.onmouseup = function() {Camera[cam].zoom = 1};
 		};*/
 };
-window.onresize=function(){
-	for(i in CanvasArray){
-		CanvasArray[i].width=document.documentElement.clientWidth;
-		CanvasArray[i].height=document.documentElement.clientHeight;
-}}
 
+window.onresize = function() {
+	for(i in CanvasArray){
+		CanvasArray[i].width=window.innerWidth;
+		CanvasArray[i].height=window.innerHeight;
+	}
+	for(i in Camera){		
+			Camera[i].display.x = Camera[i].wX*window.innerWidth/fx;
+			Camera[i].display.y = Camera[i].wY*window.innerHeight/fy;
+	}
+}
 setInterval(function() {
-	CanvasArray[0].getContext("2d").clearRect(0, 0, document.documentElement.clientWidth, document.documentElement.clientHeight);
+	CanvasArray[0].getContext("2d").clearRect(0, 0, window.innerWidth, window.innerHeight);
 	for(var i = 1 ;i < CanvasArray.length;i++){
 		var w,h;
 		if(CanvasArray[i].width!=null){w=CanvasArray[i].width;}else{w=0;}
