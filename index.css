@@ -84,7 +84,7 @@ a.toggle .glyphicon-chevron-right,
     /* top left corner */
     position: fixed;
     right: -60px;
-    top: 90px;
+    top: 30px;
     /* 45 deg ccw rotation */
     -webkit-transform: rotate(45deg);
     -moz-transform: rotate(45deg);
